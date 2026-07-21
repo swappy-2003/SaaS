@@ -1,5 +1,4 @@
 node_modules/
-vectors/
 dist/
 .env
 .DS_Store
