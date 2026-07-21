@@ -7,15 +7,23 @@ import { logger } from '../../utils/logger.js';
 
 /**
  * Registers essential security middlewares on the Fastify instance:
- * CORS, Helmet security headers, and API rate limiting.
+ * CORS (restricted to allowed domains), Helmet security headers, and API rate limiting.
  */
 export async function registerSecurity(fastify: FastifyInstance): Promise<void> {
-  logger.info('Registering security middlewares (CORS, Helmet, Rate Limiter)...');
+  logger.info('Registering production-grade security middlewares...');
 
-  // 1. Configure CORS
+  // 1. Configure CORS (Restricting access to only allowed frontend domains)
+  const allowedOriginsString = process.env.ALLOWED_ORIGINS || '';
+  // Split comma-separated origins, default to '*' in development if empty
+  const allowedOrigins = allowedOriginsString
+    ? allowedOriginsString.split(',').map(o => o.trim())
+    : (config.isDev ? '*' : []);
+
+  logger.info(`CORS allowed origins configured:`, allowedOrigins);
+
   await fastify.register(cors, {
-    origin: '*', // For a reusable SaaS/public API product. Can be restricted in config later.
-    methods: ['GET', 'POST', 'OPTIONS'],
+    origin: allowedOrigins,
+    methods: ['POST', 'OPTIONS'], // Restrict to POST (chat/reindex) and OPTIONS (preflight)
     allowedHeaders: ['Content-Type', 'Authorization']
   });
 
@@ -29,7 +37,6 @@ export async function registerSecurity(fastify: FastifyInstance): Promise<void> 
     max: config.rateLimitMax,
     timeWindow: '1 minute',
     keyGenerator: (req) => {
-      // Use IP address or fallback to default
       return req.headers['x-forwarded-for'] as string || req.ip;
     },
     errorResponseBuilder: (request, context) => {
@@ -41,5 +48,5 @@ export async function registerSecurity(fastify: FastifyInstance): Promise<void> 
     }
   });
 
-  logger.info('Security middlewares successfully registered.');
+  logger.info('Security middlewares successfully registered and active.');
 }
