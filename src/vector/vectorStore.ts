@@ -56,7 +56,7 @@ export class VectorStore {
 
     try {
       // Overwrite the table with the new items to replace previous indexes
-      await db.createTable(this.TABLE_NAME, records, { mode: 'overwrite' });
+      await db.createTable(this.TABLE_NAME, records as any[], { mode: 'overwrite' });
       logger.info(`Successfully stored ${records.length} vector records in LanceDB for siteId: "${siteId}"`);
     } catch (error) {
       logger.error(`Failed to store vector records in LanceDB for siteId: "${siteId}"`, error);

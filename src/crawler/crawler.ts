@@ -153,7 +153,7 @@ export async function crawlSite(
         });
 
         // Ensure response is HTML
-        const contentType = response.headers['content-type'] || '';
+        const contentType = String(response.headers['content-type'] || '');
         if (!contentType.includes('text/html')) {
           logger.warn(`Skipping non-HTML page ${url}: Content-Type is ${contentType}`);
           continue;
@@ -185,7 +185,7 @@ export async function crawlSite(
           validateStatus: (status) => status === 200
         });
 
-        const contentType = response.headers['content-type'] || '';
+        const contentType = String(response.headers['content-type'] || '');
         if (!contentType.includes('text/html')) {
           logger.warn(`Skipping non-HTML page ${currentUrl}`);
           continue;

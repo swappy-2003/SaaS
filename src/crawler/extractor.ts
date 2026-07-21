@@ -53,7 +53,7 @@ export function cleanHtmlAndExtract(html: string, url: string, siteId: string): 
   });
 
   // Select primary content container or default to body
-  let contentContainer = $('body');
+  let contentContainer: any = $('body');
   for (const selector of ['main', 'article', '#content', '.content', '.main-content']) {
     const el = $(selector);
     if (el.length > 0) {
