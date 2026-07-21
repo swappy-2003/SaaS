@@ -16,7 +16,3 @@ services:
         value: nvidia/nemotron-3-super-120b-a12b:free
       - key: RATE_LIMIT_MAX
         value: 100
-    disk:
-      name: vectors-storage
-      mountPath: /opt/render/project/src/vectors
-      sizeGB: 1
