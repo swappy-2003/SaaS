@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: ai-rag-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: OPENROUTER_API_KEY
+        sync: false # Render will prompt you to enter this key during deployment
+      - key: OPENROUTER_MODEL
+        value: nvidia/nemotron-3-super-120b-a12b:free
+      - key: RATE_LIMIT_MAX
+        value: 100
+    disk:
+      name: vectors-storage
+      mountPath: /opt/render/project/src/vectors
+      sizeGB: 1
