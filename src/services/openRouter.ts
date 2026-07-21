@@ -10,7 +10,7 @@ export interface ChatMessage {
 export class OpenRouterClient {
   private apiKey: string;
   private defaultModel: string;
-  private baseUrl = 'https://openrouter.ai/api/v1';
+  private baseUrl = config.llmBaseUrl;
 
   constructor() {
     this.apiKey = config.openRouterApiKey;

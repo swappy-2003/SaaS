@@ -9,6 +9,7 @@ const configSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   OPENROUTER_API_KEY: z.string().optional().default(''),
   OPENROUTER_MODEL: z.string().default('meta-llama/llama-3-8b-instruct:free'),
+  LLM_BASE_URL: z.string().default('https://openrouter.ai/api/v1'), // Configurable provider url
   RATE_LIMIT_MAX: z.coerce.number().default(100),
 });
 
@@ -29,6 +30,7 @@ export const config = {
   nodeEnv: envConfig.NODE_ENV,
   openRouterApiKey: envConfig.OPENROUTER_API_KEY,
   openRouterModel: envConfig.OPENROUTER_MODEL,
+  llmBaseUrl: envConfig.LLM_BASE_URL,
   rateLimitMax: envConfig.RATE_LIMIT_MAX,
   isDev: envConfig.NODE_ENV === 'development',
 };

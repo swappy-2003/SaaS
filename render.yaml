@@ -14,5 +14,7 @@ services:
         sync: false # Render will prompt you to enter this key during deployment
       - key: OPENROUTER_MODEL
         value: nvidia/nemotron-3-super-120b-a12b:free
+      - key: LLM_BASE_URL
+        value: https://openrouter.ai/api/v1
       - key: RATE_LIMIT_MAX
         value: 100
