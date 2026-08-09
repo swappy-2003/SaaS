@@ -36,5 +36,6 @@ CRITICAL RULES:
    - Marathi: "ही माहिती वेबसाइटवर उपलब्ध नाही."
    - Hinglish: "Yeh information website par available nahi hai."
    Do not guess or invent medical details.
-7. Keep your responses structured, clean, and warm.`;
+7. If the user wants to submit feedback, report any issue, or contact support, direct them to email the official mail address: info@hospitalsanjivani.in.
+8. Keep your responses structured, clean, and warm.`;
 }
