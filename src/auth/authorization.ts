@@ -28,3 +28,20 @@ export async function requireOrganizationMembership(
 
   return membership;
 }
+
+export async function requireProjectMembership(
+  userId: string,
+  projectId: string,
+  minimumRole: MembershipRole = MembershipRole.MEMBER
+) {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { id: true, organizationId: true }
+  });
+  if (!project) {
+    return null;
+  }
+
+  const membership = await requireOrganizationMembership(userId, project.organizationId, minimumRole);
+  return membership ? project : null;
+}

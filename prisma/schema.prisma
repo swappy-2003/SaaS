@@ -90,6 +90,8 @@ model Website {
   name                 String
   url                  String
   allowedOrigins       String[]      @default([])
+  verificationTokenHash String?      @unique
+  verifiedAt           DateTime?
   status               WebsiteStatus @default(DRAFT)
   lastIndexedAt        DateTime?
   indexedPageCount     Int           @default(0)

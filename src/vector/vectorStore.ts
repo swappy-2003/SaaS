@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { logger } from '../utils/logger.js';
 import { Chunk } from '../crawler/extractor.js';
+import { config } from '../config/index.js';
 
 export interface VectorRecord {
   vector: number[];
@@ -26,7 +27,7 @@ export interface SearchResult {
 
 export class VectorStore {
   private static TABLE_NAME = 'chunks';
-  private static BASE_DIR = path.resolve('vectors');
+  private static BASE_DIR = path.resolve(config.vectorDataDir);
 
   /**
    * Resolves the storage path for a given site tenant.

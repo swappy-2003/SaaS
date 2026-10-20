@@ -8,6 +8,9 @@ import { chatRoutes } from './api/routes/chat.js';
 import { authPlugin } from './auth/plugin.js';
 import { authRoutes } from './api/routes/auth.js';
 import { organizationRoutes } from './api/routes/organizations.js';
+import { websiteRoutes } from './api/routes/websites.js';
+import { indexingJobRoutes } from './api/routes/indexingJobs.js';
+import { indexingWorker } from './services/indexingWorker.js';
 
 const fastify = Fastify({
   logger: false // Disable default Pino logging since we use our own custom structured logger
@@ -24,6 +27,8 @@ async function startServer() {
     // 2. Register application endpoints
     await fastify.register(authRoutes);
     await fastify.register(organizationRoutes);
+    await fastify.register(websiteRoutes);
+    await fastify.register(indexingJobRoutes);
     await fastify.register(healthRoutes);
     await fastify.register(reindexRoutes);
     await fastify.register(chatRoutes);
@@ -47,6 +52,15 @@ async function startServer() {
     });
 
     logger.info(`🚀 Server running and listening at: http://${config.host}:${config.port}`);
+    await indexingWorker.start();
+
+    const shutdown = async () => {
+      indexingWorker.stop();
+      await fastify.close();
+      process.exit(0);
+    };
+    process.once('SIGINT', shutdown);
+    process.once('SIGTERM', shutdown);
   } catch (error) {
     logger.error('Fatal crash on server start', error);
     process.exit(1);

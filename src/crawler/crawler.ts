@@ -1,30 +1,23 @@
-import axios from 'axios';
 import * as xml2js from 'xml2js';
 import { URL } from 'url';
 import * as cheerio from 'cheerio';
 import { cleanHtmlAndExtract, ExtractedPage } from './extractor.js';
 import { logger } from '../utils/logger.js';
-
-// User Agent header for crawling
-const HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-};
+import { assertPublicWebsiteUrl, fetchPublicWebsiteContent } from '../security/publicUrl.js';
 
 /**
  * Attempts to parse a sitemap.xml and returns all loc links inside.
  * Recursively parses sitemap indices if present.
  */
-async function parseSitemap(sitemapUrl: string): Promise<string[]> {
+async function parseSitemap(sitemapUrl: string, hostname: string, depth = 0): Promise<string[]> {
+  if (depth > 4) return [];
   try {
     logger.info(`Fetching sitemap at ${sitemapUrl}`);
-    const response = await axios.get(sitemapUrl, {
-      timeout: 10000,
-      headers: HEADERS,
-      validateStatus: (status) => status === 200
-    });
+    const response = await fetchPublicWebsiteContent(sitemapUrl, hostname);
+    if (!response.contentType.includes('xml') && !response.contentType.includes('text/')) return [];
 
     const parser = new xml2js.Parser({ explicitArray: false });
-    const result = await parser.parseStringPromise(response.data);
+    const result = await parser.parseStringPromise(response.body);
 
     if (result.urlset && result.urlset.url) {
       const urls = Array.isArray(result.urlset.url)
@@ -39,7 +32,9 @@ async function parseSitemap(sitemapUrl: string): Promise<string[]> {
       const allUrls: string[] = [];
       for (const subSitemap of sitemapUrls) {
         if (subSitemap) {
-          const subUrls = await parseSitemap(subSitemap);
+          const subSitemapUrl = new URL(subSitemap);
+          if (subSitemapUrl.hostname !== hostname) continue;
+          const subUrls = await parseSitemap(subSitemap, hostname, depth + 1);
           allUrls.push(...subUrls);
         }
       }
@@ -110,13 +105,13 @@ export async function crawlSite(
 ): Promise<ExtractedPage[]> {
   logger.info(`Starting crawl for siteId: "${siteId}" at URL: ${startUrl}`);
 
-  const startUrlObj = new URL(startUrl);
+  const startUrlObj = await assertPublicWebsiteUrl(startUrl);
   const origin = startUrlObj.origin;
   
   // Try checking sitemap first
   let urlsToCrawl: string[] = [];
   const sitemapUrl = `${origin}/sitemap.xml`;
-  const sitemapUrls = await parseSitemap(sitemapUrl);
+  const sitemapUrls = await parseSitemap(sitemapUrl, startUrlObj.hostname);
   
   if (sitemapUrls.length > 0) {
     logger.info(`Found ${sitemapUrls.length} links in sitemap.xml. Will index sitemap links.`);
@@ -146,20 +141,16 @@ export async function crawlSite(
 
       try {
         logger.info(`Fetching page: ${url}`);
-        const response = await axios.get(url, {
-          timeout: 10000,
-          headers: HEADERS,
-          validateStatus: (status) => status === 200
-        });
+        const response = await fetchPublicWebsiteContent(url, startUrlObj.hostname);
 
         // Ensure response is HTML
-        const contentType = String(response.headers['content-type'] || '');
+        const contentType = response.contentType;
         if (!contentType.includes('text/html')) {
           logger.warn(`Skipping non-HTML page ${url}: Content-Type is ${contentType}`);
           continue;
         }
 
-        const page = cleanHtmlAndExtract(response.data, url, siteId);
+        const page = cleanHtmlAndExtract(response.body, response.url, siteId);
         if (page.content) {
           pages.push(page);
         }
@@ -179,20 +170,16 @@ export async function crawlSite(
       logger.info(`Crawling queue link (${pages.length}/${maxPages} indexed, ${queue.length} in queue): ${currentUrl}`);
 
       try {
-        const response = await axios.get(currentUrl, {
-          timeout: 10000,
-          headers: HEADERS,
-          validateStatus: (status) => status === 200
-        });
+        const response = await fetchPublicWebsiteContent(currentUrl, startUrlObj.hostname);
 
-        const contentType = String(response.headers['content-type'] || '');
+        const contentType = response.contentType;
         if (!contentType.includes('text/html')) {
           logger.warn(`Skipping non-HTML page ${currentUrl}`);
           continue;
         }
 
         // Extract links from HTML to enqueue
-        const $ = cheerio.load(response.data);
+        const $ = cheerio.load(response.body);
         $('a').each((_, element) => {
           const href = $(element).attr('href');
           if (href) {
@@ -204,7 +191,7 @@ export async function crawlSite(
           }
         });
 
-        const page = cleanHtmlAndExtract(response.data, currentUrl, siteId);
+        const page = cleanHtmlAndExtract(response.body, response.url, siteId);
         if (page.content) {
           pages.push(page);
         }

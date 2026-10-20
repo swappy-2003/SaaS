@@ -34,7 +34,7 @@ Postgres is the system of record. LanceDB holds only derived, per-project retrie
 | 0. Existing RAG backend | Complete | Crawl, extraction, chunking, local embeddings, LanceDB retrieval, OpenRouter answers, SSE | Current TypeScript build passes |
 | 1. SaaS database foundation | Complete | Prisma schema, initial migration, environment validation, local Postgres Compose recipe | `npm run build` and Prisma validation pass |
 | 2. Identity and tenant authorization | Implemented; DB verification pending | Registration/login, JWT validation, organization membership, project authorization | Cross-tenant access tests pass; legacy admin indexing cannot run in production |
-| 3. Secure website ingestion | Planned | Website CRUD, SSRF-safe crawling, durable jobs, progress, retry/cancel, atomic re-index | Restart-safe job and crawler-security tests pass |
+| 3. Secure website ingestion | Implemented; live DB verification pending | Website ownership proof, DNS/private-address/redirect checks, persistent jobs, status, retry by re-enqueue, queued-job cancellation, per-website vectors | Restart-safe job and crawler-security tests pass |
 | 4. Public chat and usage controls | Planned | Public assistant IDs, origin checks, rate limits, usage/cost ledger, provider abstraction | A public widget can only retrieve its own project data |
 | 5. Dashboard and widget | Planned | Next.js dashboard, project setup, status, test chat, install snippet, lightweight widget | A pilot customer completes setup without operator help |
 | 6. Operations and pilot readiness | Planned | Docker deployment, backups/restore drill, monitoring, CI, load/failure tests | One real pilot passes an operational checklist |

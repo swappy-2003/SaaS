@@ -17,6 +17,8 @@ const configSchema = z.object({
   CRAWL_MAX_PAGES: z.coerce.number().int().positive().max(500).default(150),
   CRAWL_MAX_CONCURRENCY: z.coerce.number().int().positive().max(10).default(2),
   CRAWL_TIMEOUT_MS: z.coerce.number().int().positive().max(60000).default(10000),
+  INDEX_WORKER_POLL_MS: z.coerce.number().int().min(1000).max(60000).default(5000),
+  INDEX_JOB_STALE_MS: z.coerce.number().int().min(60000).max(86400000).default(1800000),
   ENABLE_LEGACY_REINDEX: z.enum(['true', 'false']).default('false'),
 }).superRefine((value, context) => {
   if (value.NODE_ENV === 'production' && !value.DATABASE_URL) {
@@ -60,6 +62,8 @@ export const config = {
   crawlMaxPages: envConfig.CRAWL_MAX_PAGES,
   crawlMaxConcurrency: envConfig.CRAWL_MAX_CONCURRENCY,
   crawlTimeoutMs: envConfig.CRAWL_TIMEOUT_MS,
+  indexWorkerPollMs: envConfig.INDEX_WORKER_POLL_MS,
+  indexJobStaleMs: envConfig.INDEX_JOB_STALE_MS,
   enableLegacyReindex: envConfig.ENABLE_LEGACY_REINDEX === 'true',
   isDev: envConfig.NODE_ENV === 'development',
 };
