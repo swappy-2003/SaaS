@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum WebsiteStatus {
+  DRAFT
+  INDEXING
+  READY
+  FAILED
+  DISABLED
+}
+
+enum IndexJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum ConversationRole {
+  USER
+  ASSISTANT
+}
+
+model User {
+  id           String       @id @default(uuid()) @db.Uuid
+  email        String       @unique
+  passwordHash String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  Membership[]
+}
+
+model Organization {
+  id           String       @id @default(uuid()) @db.Uuid
+  name         String
+  slug         String       @unique
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  Membership[]
+  projects     Project[]
+  usageEvents  UsageEvent[]
+}
+
+model Membership {
+  id             String         @id @default(uuid()) @db.Uuid
+  userId         String         @db.Uuid
+  organizationId String         @db.Uuid
+  role           MembershipRole @default(MEMBER)
+  createdAt      DateTime       @default(now())
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+model Project {
+  id             String         @id @default(uuid()) @db.Uuid
+  organizationId String         @db.Uuid
+  name           String
+  slug           String
+  vectorNamespace String        @unique
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  websites       Website[]
+  apiKeys        ApiKey[]
+  usageEvents    UsageEvent[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+}
+
+model Website {
+  id                   String        @id @default(uuid()) @db.Uuid
+  projectId            String        @db.Uuid
+  name                 String
+  url                  String
+  allowedOrigins       String[]      @default([])
+  status               WebsiteStatus @default(DRAFT)
+  lastIndexedAt        DateTime?
+  indexedPageCount     Int           @default(0)
+  indexedChunkCount    Int           @default(0)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  project              Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assistant            Assistant?
+  indexingJobs         IndexingJob[]
+  conversations        Conversation[]
+
+  @@unique([projectId, url])
+  @@index([projectId])
+}
+
+model Assistant {
+  id             String   @id @default(uuid()) @db.Uuid
+  websiteId      String   @unique @db.Uuid
+  publicId       String   @unique
+  name           String
+  welcomeMessage String
+  theme          Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  website        Website  @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+}
+
+model IndexingJob {
+  id             String         @id @default(uuid()) @db.Uuid
+  websiteId      String         @db.Uuid
+  status         IndexJobStatus @default(QUEUED)
+  attempt        Int            @default(0)
+  pagesCrawled   Int            @default(0)
+  chunksCreated  Int            @default(0)
+  errorMessage   String?
+  requestedAt    DateTime       @default(now())
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  website        Website        @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  @@index([websiteId, status])
+}
+
+model ApiKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  projectId  String    @db.Uuid
+  label      String
+  prefix     String
+  secretHash String
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, prefix])
+  @@index([projectId, revokedAt])
+}
+
+model Conversation {
+  id        String          @id @default(uuid()) @db.Uuid
+  websiteId String          @db.Uuid
+  visitorId String
+  createdAt DateTime        @default(now())
+  website   Website         @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+
+  @@index([websiteId, createdAt])
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid()) @db.Uuid
+  conversationId String           @db.Uuid
+  role           ConversationRole
+  content        String
+  createdAt      DateTime         @default(now())
+  conversation   Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+model UsageEvent {
+  id             String   @id @default(uuid()) @db.Uuid
+  organizationId String   @db.Uuid
+  projectId      String?  @db.Uuid
+  eventType      String
+  inputTokens    Int      @default(0)
+  outputTokens   Int      @default(0)
+  estimatedCost  Decimal  @default(0) @db.Decimal(12, 6)
+  createdAt      DateTime @default(now())
+  metadata       Json     @default("{}")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([projectId, createdAt])
+}

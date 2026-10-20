@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { IndexingService } from '../../services/indexingService.js';
 import { logger } from '../../utils/logger.js';
+import { config } from '../../config/index.js';
 
 const reindexBodySchema = z.object({
   siteId: z.string().min(1, 'siteId is required')
@@ -9,6 +10,12 @@ const reindexBodySchema = z.object({
 
 export async function reindexRoutes(fastify: FastifyInstance) {
   fastify.post('/reindex', async (request: FastifyRequest, reply: FastifyReply) => {
+    if (!config.enableLegacyReindex) {
+      return reply.status(410).send({
+        error: 'Gone',
+        message: 'Legacy file-backed indexing is disabled. Use the upcoming project website indexing API.'
+      });
+    }
     logger.info('Received reindex request');
 
     // 1. Validate request body

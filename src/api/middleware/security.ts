@@ -23,7 +23,7 @@ export async function registerSecurity(fastify: FastifyInstance): Promise<void> 
 
   await fastify.register(cors, {
     origin: allowedOrigins,
-    methods: ['POST', 'OPTIONS'], // Restrict to POST (chat/reindex) and OPTIONS (preflight)
+    methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
   });
 

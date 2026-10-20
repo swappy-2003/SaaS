@@ -6,6 +6,42 @@ This backend operates completely independently of the frontend, offering a set o
 
 ---
 
+## MVP status
+
+The repository currently contains a working single-site RAG pipeline and the first SaaS-foundation migration. The database schema models `User → Organization → Project → Website → Assistant`, plus indexing jobs, API-key metadata, conversations, and usage events. Authentication and database-backed request authorization are the next milestone; do not expose this API publicly as a multi-tenant service until that work is complete.
+
+## Local PostgreSQL setup
+
+1. Copy the environment template and set a non-default password before using anything beyond local development:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Start PostgreSQL:
+
+   ```bash
+   docker compose up -d postgres
+   ```
+
+3. Generate the client and apply the checked-in migration:
+
+   ```bash
+   npm install
+   npm run db:generate
+   npm run db:migrate
+   ```
+
+4. Confirm the database state:
+
+   ```bash
+   npm run db:status
+   ```
+
+`DATABASE_URL` is mandatory in production. The database, LanceDB data directory, and future job worker must use persistent storage in deployment.
+
+---
+
 ## 🏗️ System Architecture
 
 ```mermaid
