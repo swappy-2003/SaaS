@@ -22,9 +22,19 @@ export async function registerSecurity(fastify: FastifyInstance): Promise<void> 
   logger.info(`CORS allowed origins configured:`, allowedOrigins);
 
   await fastify.register(cors, {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    // Public assistant handlers perform a second, database-backed origin
+    // check against each website's allowlist. Let their preflight requests
+    // through so a customer does not need to edit server environment config
+    // merely to install a widget. Administrative routes retain the global
+    // allowlist below.
+    delegator: (request, callback) => {
+      const isPublicAssistantRoute = request.url.startsWith('/public/assistants/');
+      callback(null, {
+        origin: isPublicAssistantRoute ? true : allowedOrigins,
+        methods: ['GET', 'POST', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization']
+      });
+    }
   });
 
   // 2. Configure Helmet (Security Headers)

@@ -10,6 +10,9 @@ import { authRoutes } from './api/routes/auth.js';
 import { organizationRoutes } from './api/routes/organizations.js';
 import { websiteRoutes } from './api/routes/websites.js';
 import { indexingJobRoutes } from './api/routes/indexingJobs.js';
+import { assistantRoutes } from './api/routes/assistants.js';
+import { publicChatRoutes } from './api/routes/publicChat.js';
+import { widgetRoutes } from './api/routes/widget.js';
 import { indexingWorker } from './services/indexingWorker.js';
 
 const fastify = Fastify({
@@ -29,6 +32,9 @@ async function startServer() {
     await fastify.register(organizationRoutes);
     await fastify.register(websiteRoutes);
     await fastify.register(indexingJobRoutes);
+    await fastify.register(assistantRoutes);
+    await fastify.register(publicChatRoutes);
+    await fastify.register(widgetRoutes);
     await fastify.register(healthRoutes);
     await fastify.register(reindexRoutes);
     await fastify.register(chatRoutes);

@@ -14,6 +14,8 @@ const configSchema = z.object({
   OPENROUTER_MODEL: z.string().default('meta-llama/llama-3-8b-instruct:free'),
   LLM_BASE_URL: z.string().default('https://openrouter.ai/api/v1'), // Configurable provider url
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(100),
+  PUBLIC_CHAT_RATE_LIMIT_MAX: z.coerce.number().int().positive().max(1000).default(30),
+  PUBLIC_CHAT_RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).max(3600000).default(60000),
   CRAWL_MAX_PAGES: z.coerce.number().int().positive().max(500).default(150),
   CRAWL_MAX_CONCURRENCY: z.coerce.number().int().positive().max(10).default(2),
   CRAWL_TIMEOUT_MS: z.coerce.number().int().positive().max(60000).default(10000),
@@ -59,6 +61,8 @@ export const config = {
   openRouterModel: envConfig.OPENROUTER_MODEL,
   llmBaseUrl: envConfig.LLM_BASE_URL,
   rateLimitMax: envConfig.RATE_LIMIT_MAX,
+  publicChatRateLimitMax: envConfig.PUBLIC_CHAT_RATE_LIMIT_MAX,
+  publicChatRateLimitWindowMs: envConfig.PUBLIC_CHAT_RATE_LIMIT_WINDOW_MS,
   crawlMaxPages: envConfig.CRAWL_MAX_PAGES,
   crawlMaxConcurrency: envConfig.CRAWL_MAX_CONCURRENCY,
   crawlTimeoutMs: envConfig.CRAWL_TIMEOUT_MS,

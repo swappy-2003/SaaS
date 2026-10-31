@@ -94,20 +94,26 @@ ${r.text}`;
    * Processes a non-streaming query.
    */
   public static async query(siteId: string, message: string): Promise<RagResult> {
-    // 1. Load config
-    const config = this.getSiteConfig(siteId);
+    return this.queryForWebsite(siteId, message, this.getSiteConfig(siteId).name);
+  }
+
+  /**
+   * Queries a database-backed website namespace. Unlike the legacy method,
+   * this does not read a site configuration from disk.
+   */
+  public static async queryForWebsite(websiteId: string, message: string, siteName: string): Promise<RagResult> {
 
     // 2. Generate embedding for user message
-    logger.info(`Embedding query for siteId: "${siteId}": "${message.substring(0, 40)}..."`);
+    logger.info(`Embedding query for websiteId: "${websiteId}": "${message.substring(0, 40)}..."`);
     const queryVector = await embeddingsService.getEmbedding(message);
 
     // 3. Search vector DB (top 5 chunks)
-    const searchResults = await VectorStore.search(siteId, queryVector, 5);
+    const searchResults = await VectorStore.search(websiteId, queryVector, 5);
     const sources = this.extractSources(searchResults);
 
     // 4. Build system prompt & prompt context
     const contextStr = this.buildContext(searchResults);
-    const systemPrompt = getSystemPrompt(siteId, contextStr);
+    const systemPrompt = getSystemPrompt(siteName, contextStr);
 
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
@@ -127,20 +133,23 @@ ${r.text}`;
    * Processes a streaming query, returning the citation sources and the SSE generator.
    */
   public static async queryStream(siteId: string, message: string): Promise<RagStreamResult> {
-    // 1. Load config
-    const config = this.getSiteConfig(siteId);
+    return this.queryStreamForWebsite(siteId, message, this.getSiteConfig(siteId).name);
+  }
+
+  /** Streaming counterpart to queryForWebsite for public assistants. */
+  public static async queryStreamForWebsite(websiteId: string, message: string, siteName: string): Promise<RagStreamResult> {
 
     // 2. Generate embedding for user message
-    logger.info(`Embedding query stream for siteId: "${siteId}": "${message.substring(0, 40)}..."`);
+    logger.info(`Embedding query stream for websiteId: "${websiteId}": "${message.substring(0, 40)}..."`);
     const queryVector = await embeddingsService.getEmbedding(message);
 
     // 3. Search vector DB (top 5 chunks)
-    const searchResults = await VectorStore.search(siteId, queryVector, 5);
+    const searchResults = await VectorStore.search(websiteId, queryVector, 5);
     const sources = this.extractSources(searchResults);
 
     // 4. Build system prompt & prompt context
     const contextStr = this.buildContext(searchResults);
-    const systemPrompt = getSystemPrompt(siteId, contextStr);
+    const systemPrompt = getSystemPrompt(siteName, contextStr);
 
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },

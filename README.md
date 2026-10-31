@@ -8,7 +8,7 @@ This backend operates completely independently of the frontend, offering a set o
 
 ## MVP status
 
-The repository currently contains a working single-site RAG pipeline and the first SaaS-foundation migration. The database schema models `User → Organization → Project → Website → Assistant`, plus indexing jobs, API-key metadata, conversations, and usage events. Authentication and database-backed request authorization are the next milestone; do not expose this API publicly as a multi-tenant service until that work is complete.
+The repository contains the database-backed SaaS API, secure public chat, and a dependency-free embeddable widget. A public assistant is configured by an organization administrator and is addressed only by its generated `publicId`; its requests are checked against that website's allowlist and retrieve only that website's LanceDB namespace. Chat exchanges and token estimates are stored in PostgreSQL. The dashboard is the next milestone.
 
 ## Local PostgreSQL setup
 
@@ -210,6 +210,7 @@ Queries the tenant's vector database, retrieves the top 5 chunks, constructs a r
   "stream": false
 }
 ```
+
 * **Response (Standard JSON)**:
 ```json
 {
@@ -233,6 +234,50 @@ If `"stream": true` is passed:
    `data: {"type":"token","content":" dermatologist"}`
 4. Emits a termination signal:
    `data: {"type":"done"}`
+
+---
+
+### 4. Assistant configuration and public chat
+
+An organization `ADMIN` or `OWNER` configures one assistant per website. The first `PUT` creates an unguessable public identifier; later calls update the same assistant without changing it.
+
+```http
+PUT /websites/:websiteId/assistant
+Authorization: Bearer <access-token>
+Content-Type: application/json
+
+{
+  "name": "Acme Assistant",
+  "welcomeMessage": "Hi! How can I help?",
+  "theme": { "primaryColor": "#2563eb" }
+}
+```
+
+The response contains `assistant.publicId`. A browser widget uses it with an `Origin` header that exactly matches one of the `allowedOrigins` set while creating the website:
+
+```http
+POST /public/assistants/:publicId/chat
+Origin: https://www.example.com
+Content-Type: application/json
+
+{ "message": "What services do you offer?", "visitorId": "optional-widget-visitor-id" }
+```
+
+The endpoint returns the answer, citations, a `conversationId`, and a `visitorId`. Set `stream: true` for SSE. `GET /public/assistants/:publicId` returns the public display configuration for widget bootstrapping. Public chat is limited per assistant and visitor IP; configure `PUBLIC_CHAT_RATE_LIMIT_MAX` and `PUBLIC_CHAT_RATE_LIMIT_WINDOW_MS` to control it.
+
+### 5. Embeddable widget
+
+After configuring the assistant, paste this before the closing `</body>` tag on an allowed website origin. The widget has no framework dependencies, isolates its styles in a shadow root, and stores only an anonymous visitor and conversation ID in that browser's local storage.
+
+```html
+<script
+  src="https://api.example.com/widget.js"
+  data-assistant="asst_your_public_id_here"
+  async
+></script>
+```
+
+The API host is inferred from `src`. If the script is hosted separately, provide `data-api-base="https://api.example.com"`. Add `data-stream="false"` to use ordinary JSON responses instead of streaming tokens.
 
 ---
 
