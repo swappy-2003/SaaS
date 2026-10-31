@@ -8,7 +8,7 @@ This backend operates completely independently of the frontend, offering a set o
 
 ## MVP status
 
-The repository contains the database-backed SaaS API, secure public chat, and a dependency-free embeddable widget. A public assistant is configured by an organization administrator and is addressed only by its generated `publicId`; its requests are checked against that website's allowlist and retrieve only that website's LanceDB namespace. Chat exchanges and token estimates are stored in PostgreSQL. The dashboard is the next milestone.
+The repository contains the database-backed SaaS API, secure public chat, a dependency-free embeddable widget, and a same-origin operator dashboard. A public assistant is configured by an organization administrator and is addressed only by its generated `publicId`; its requests are checked against that website's allowlist and retrieve only that website's LanceDB namespace. Chat exchanges and token estimates are stored in PostgreSQL.
 
 ## Local PostgreSQL setup
 
@@ -278,6 +278,10 @@ After configuring the assistant, paste this before the closing `</body>` tag on 
 ```
 
 The API host is inferred from `src`. If the script is hosted separately, provide `data-api-base="https://api.example.com"`. Add `data-stream="false"` to use ordinary JSON responses instead of streaming tokens.
+
+### 6. Operator dashboard
+
+Open `/dashboard` on the API host, for example `http://localhost:3000/dashboard` in development. It provides registration and sign-in plus project and website setup, ownership verification, indexing control, assistant configuration, the generated widget snippet, and authenticated test chat. Test chat uses `POST /websites/:websiteId/test-chat` and therefore does not depend on the public-widget origin allowlist.
 
 ---
 

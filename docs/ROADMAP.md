@@ -36,7 +36,7 @@ Postgres is the system of record. LanceDB holds only derived, per-project retrie
 | 2. Identity and tenant authorization | Implemented; DB verification pending | Registration/login, JWT validation, organization membership, project authorization | Cross-tenant access tests pass; legacy admin indexing cannot run in production |
 | 3. Secure website ingestion | Implemented; live DB verification pending | Website ownership proof, DNS/private-address/redirect checks, persistent jobs, status, retry by re-enqueue, queued-job cancellation, per-website vectors | Restart-safe job and crawler-security tests pass |
 | 4. Public chat and usage controls | Implemented; live DB verification pending | Public assistant IDs, website-origin checks, per-assistant/IP limits, conversation persistence, usage ledger, provider abstraction | A public widget can only retrieve its own website data |
-| 5. Dashboard and widget | Widget implemented; dashboard planned | Installable dependency-free widget with assistant bootstrap, streaming chat, local visitor/conversation continuity, and an install snippet | A pilot customer completes setup without operator help |
+| 5. Dashboard and widget | Implemented; live DB verification pending | Same-origin operator dashboard for setup, verification, indexing, assistant configuration, widget install, and authenticated test chat; installable dependency-free widget with streaming and visitor continuity | A pilot customer completes setup without operator help |
 | 6. Operations and pilot readiness | Planned | Docker deployment, backups/restore drill, monitoring, CI, load/failure tests | One real pilot passes an operational checklist |
 
 ## What exists today
@@ -63,4 +63,4 @@ Postgres is the system of record. LanceDB holds only derived, per-project retrie
 
 1. Create the Supabase project, a dedicated Prisma role, and apply `npm run db:migrate`.
 2. Exercise organization isolation and public-origin rejection against a live database.
-3. Build the dashboard for project setup, indexing status, test chat, and widget installation.
+3. Walk one pilot through setup against a live database and record the operational checklist results.
